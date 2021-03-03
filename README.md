@@ -21,6 +21,8 @@ The SVG is hosted at http://HOSTIP:8090/stats.svg.
 
 ## Todo:
 - Add releases
+- Add customizable title
+- Add timezone display based on user's timezone
 
 
 
