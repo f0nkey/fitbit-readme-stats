@@ -182,12 +182,8 @@ func genHeartText(bpm int, height int) string {
 
 func genHeart(bpm int, width int) string {
 	// https://codepen.io/tutsplus/pen/MLBMRw
-	//width = 150
 	viewBox := width + width/3
 	gOffset := viewBox / 2
-	//bpmXOffset := width/2
-	//b//pmYOffset := width
-	//pathThird := width/3
 	heart := fmt.Sprintf(`
 	<svg width="%d" height="%d" viewBox="0 0 %d %d">
 		<g transform="translate(%d %d)">
