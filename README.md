@@ -19,6 +19,9 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
 
 The SVG is hosted at http://HOSTIP:8090/stats.svg. 
 
+## Todo:
+- Add releases
+
 
 
 
