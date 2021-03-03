@@ -3,7 +3,7 @@
 ![FitBit Heart Rate Chart Example](example.svg)
 
 Plots your heart rate from your FitBit watch in an animated SVG. Embeddable in your [personal profile README.md!](https://docs.github.com/en/github/setting-up-and-managing-your-github-profile/managing-your-profile-readme)
-- Heart graphic beats in sync to your current heart rate
+- Heart graphic beats in sync to your current "LIVE" heart rate
 - Plots your heart rate from the past 4 hours in a delicious coffee-flavored theme
 
 Inspired by https://github.com/anuraghazra/github-readme-stats
@@ -21,6 +21,8 @@ The SVG is hosted at http://HOSTIP:8090/stats.svg.
 
 ## Todo:
 - Add releases
+- Add customizable title
+- Add timezone display based on user's timezone
 
 
 
