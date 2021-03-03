@@ -15,7 +15,7 @@ func main() {
 
 	config, err := readConfigFile()
 	if err != nil {
-		if strings.Contains(err.Error(), "The system cannot find the file specified.") || strings.Contains(err.Error(), "no such file")   {
+		if strings.Contains(err.Error(), "The system cannot find the file specified.") || strings.Contains(err.Error(), "no such file") {
 			genConfigFile()
 			fmt.Println("Generated config.json file. Fill the file out with tokens from creating a new app at https://dev.fitbit.com/apps then relaunch this binary.\nEnsure the app type is Personal, and Callback URL is http://localhost:8090/.")
 			os.Exit(0)
@@ -71,7 +71,7 @@ func main() {
 }
 
 // handlerUserCredentials requests user credentials from FitBit and writes them to disk.
-func handlerUserCredentials(userAuthCode string, config Config) (UserCredentials, error){
+func handlerUserCredentials(userAuthCode string, config Config) (UserCredentials, error) {
 	if userAuthCode == "" {
 		return UserCredentials{}, fmt.Errorf("no user auth code provided")
 	}

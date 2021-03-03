@@ -16,9 +16,9 @@ import (
 
 // Config holds generated fields when a new app is made at https://dev.fitbit.com/.
 type Config struct {
-	OAuthClientID string `json:"oauth_client_id"`
-	ClientSecret  string `json:"client_secret"`
-	DisplayGetSource bool `json:"display_get_source"`
+	OAuthClientID    string `json:"oauth_client_id"`
+	ClientSecret     string `json:"client_secret"`
+	DisplayGetSource bool   `json:"display_get_source"`
 }
 
 // UserCredentials holds credentials to authenticate with and request from the FitBit Web API.
@@ -49,17 +49,17 @@ type HeartRateTimeSeries struct {
 
 	// ActivitiesHeartIntraday has minute-by-minute coverage of a user's heart-rate.
 	ActivitiesHeartIntraday struct {
-		Dataset []Datapoint `json:"dataset"`
-		DatasetInterval int    `json:"datasetInterval"`
-		DatasetType     string `json:"datasetType"`
+		Dataset         []Datapoint `json:"dataset"`
+		DatasetInterval int         `json:"datasetInterval"`
+		DatasetType     string      `json:"datasetType"`
 	} `json:"activities-heart-intraday"`
 }
 
 // Dataset holds the heart bpm at a current time in the format provided by FitBit.
 type Datapoint struct {
-	Time  string `json:"time"`
+	Time     string    `json:"time"`
 	DateTime time.Time // set by us since fitbit only gives hh:mm, not date in Time
-	Value int    `json:"value"`
+	Value    int       `json:"value"`
 }
 
 // setupSuccessMsgs provides success messages after the user completes setup.
@@ -107,7 +107,7 @@ func heartRateTimesSeries(userCreds UserCredentials, appCredentials Config) ([]B
 func reqUserCredentials(appCred Config, userAuthCode string, refreshToken string) (UserCredentials, error) {
 	vals := url.Values{}
 	vals.Add("clientId", appCred.OAuthClientID)
-	vals.Add("grant_type","authorization_code")
+	vals.Add("grant_type", "authorization_code")
 	if refreshToken != "" {
 		vals.Set("grant_type", "refresh_token")
 		vals.Set("refresh_token", refreshToken)
@@ -115,11 +115,11 @@ func reqUserCredentials(appCred Config, userAuthCode string, refreshToken string
 	vals.Add("redirect_uri", "http://localhost:8090")
 	vals.Add("code", userAuthCode)
 	r := strings.NewReader(vals.Encode())
-	req, err := http.NewRequest("POST","https://api.fitbit.com/oauth2/token", r)
+	req, err := http.NewRequest("POST", "https://api.fitbit.com/oauth2/token", r)
 	if err != nil {
 		return UserCredentials{}, err
 	}
-	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(appCred.OAuthClientID + ":" + appCred.ClientSecret))
+	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(appCred.OAuthClientID+":"+appCred.ClientSecret))
 	req.Header.Add("Authorization", authHeader)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -136,7 +136,7 @@ func reqUserCredentials(appCred Config, userAuthCode string, refreshToken string
 
 	if resp.StatusCode != 200 {
 		aErr := APIError{}
-		err = json.Unmarshal(b,&aErr)
+		err = json.Unmarshal(b, &aErr)
 		if err != nil {
 			return UserCredentials{}, err
 		}
@@ -152,7 +152,7 @@ func reqUserCredentials(appCred Config, userAuthCode string, refreshToken string
 	}
 
 	creds := UserCredentials{}
-	err = json.Unmarshal(b,&creds)
+	err = json.Unmarshal(b, &creds)
 	if err != nil {
 		return UserCredentials{}, err
 	}
@@ -196,13 +196,13 @@ func rawHeartRateTimeSeries(userCreds UserCredentials) (HeartRateTimeSeries, err
 	tRange := time.Hour * time.Duration(hourRange)
 	endDate, endHr := dateHour(time.Now())
 	startDate, startHr := dateHour(time.Now().Add(-tRange))
-	uri := fmt.Sprintf(u, userCreds.UserID, startDate,endDate, startHr, endHr)
+	uri := fmt.Sprintf(u, userCreds.UserID, startDate, endDate, startHr, endHr)
 
 	r, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return HeartRateTimeSeries{}, err
 	}
-	r.Header.Add("Authorization", "Bearer " + userCreds.APIToken)
+	r.Header.Add("Authorization", "Bearer "+userCreds.APIToken)
 	c := http.Client{}
 	resp, err := c.Do(r)
 	if err != nil {
