@@ -15,7 +15,9 @@ Follow the steps it displays to the terminal to generate your credential and con
 
 Afterwards, you can run the binary on your host machine with the generated `config.json` and `credentials.json`.
 
-The SVG is hosted at http://HOSTIP:8090/stats.svg. Use `![FitBit Heart Rate Chart](http://HOSTIP:8090/stats.svg)` as a README.md embed.
+The SVG is hosted at http://HOSTIP:8090/stats.svg. 
+
+Use `![FitBit Heart Rate Chart](http://HOSTIP:8090/stats.svg)` as a README.md embed.
 
 
 
