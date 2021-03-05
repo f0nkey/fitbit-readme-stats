@@ -28,13 +28,6 @@ func HTMLCode(c color.RGBA) string {
 	return fmt.Sprintf(`rgba(%d,%d,%d,%d)`, c.R, c.G, c.B, c.A)
 }
 
-// BannerXY represents the
-type Banner struct {
-	plot       *plot.Plot
-	timeSeries plotter.XYs
-	svg        string
-}
-
 // BannerXY represents a single point on the plot.
 type BannerXY struct {
 	X time.Time
@@ -80,13 +73,6 @@ var BannerTicker = func(timeSeries plotter.XYs) plot.TickerFunc {
 	}
 }
 
-// NewBanner returns a default banner displaying that the banner is not setup yet.
-func NewBanner() *Banner {
-	b := &Banner{}
-	b.svg = defaultBanner(500, 100)
-	return b
-}
-
 func defaultBanner(width, height int) string {
 	bg := fmt.Sprintf(`<rect width="100%%" height="100%%" fill="%s" />`, HTMLCode(ColorCoffee))
 	t := fmt.Sprintf(`<text x="%d" y="%d" fill="%s" style="font-family: sans-serif; font-weight:500;" dominant-baseline="hanging" text-anchor="middle">Banner not setup yet, or no data within range is available.</text>`, width/2, height/2, HTMLCode(ColorCream))
@@ -94,10 +80,9 @@ func defaultBanner(width, height int) string {
 	return banner
 }
 
-// GenSVG generates SVG with data in arg xy.
-// Use the SVG method to get the SVG image.
+// genBanner generates the full banner svg from data in arg xy.
 // Last x value in arg xy is used as current BPM in the middle of the heart.
-func (b *Banner) GenSVG(xy []BannerXY, enableWatermark bool) (string, error) {
+func genBanner(xy []BannerXY, enableWatermark bool) (string, error) {
 	timeSeries := make(plotter.XYs, 0, len(xy))
 	for i := range xy {
 		timeSeries = append(timeSeries, plotter.XY{
@@ -106,10 +91,11 @@ func (b *Banner) GenSVG(xy []BannerXY, enableWatermark bool) (string, error) {
 		})
 	}
 
+	banner := ""
 	bpm := 0
 	if len(timeSeries) <= 0 {
-		b.svg = defaultBanner(500, 100)
-		return b.svg, fmt.Errorf("data set empty")
+		banner = defaultBanner(500, 100)
+		return banner, fmt.Errorf("data set empty")
 	}
 	bpm = int(timeSeries[len(timeSeries)-1].Y)
 
@@ -148,14 +134,9 @@ func (b *Banner) GenSVG(xy []BannerXY, enableWatermark bool) (string, error) {
 
 	bg := fmt.Sprintf(`<rect width="100%%" height="100%%" fill="%s" />`, HTMLCode(ColorCoffee))
 	style := fmt.Sprintf(`<style> .text {font: 600 9px "Arial", Sans-Serif; fill: %s;} </style>`, HTMLCode(ColorCream))
-	banner := fmt.Sprintf(`<svg id="banner" xmlns="http://www.w3.org/2000/svg" width="%dpt" height="%dpt"> <!-- Generated via https://github.com/f0nkey/fitbit-readme-stats --> %s <g id="padding" transform="translate(0 %d)"> %s <g transform="translate(0 %d)"> %s </g> </g> </svg>`, bannerWidth, bannerHeight+titleHeight+topBottomPadding, bg+style, topBottomPadding/2, waterMarkSVG+titleSVG, titleHeight+6, plotSVG+heartSVG+heartTextSVG)
-	b.svg = banner
-	return b.svg, nil
-}
+	banner = fmt.Sprintf(`<svg id="banner" xmlns="http://www.w3.org/2000/svg" width="%dpt" height="%dpt"> <!-- Generated via https://github.com/f0nkey/fitbit-readme-stats --> %s <g id="padding" transform="translate(0 %d)"> %s <g transform="translate(0 %d)"> %s </g> </g> </svg>`, bannerWidth, bannerHeight+titleHeight+topBottomPadding, bg+style, topBottomPadding/2, waterMarkSVG+titleSVG, titleHeight+6, plotSVG+heartSVG+heartTextSVG)
 
-// SVG returns the heart-rate banner in the svg format.
-func (b *Banner) SVG() string {
-	return b.svg
+	return banner, nil
 }
 
 func genWatermark(text string, height, xOffset int) string {

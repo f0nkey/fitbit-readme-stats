@@ -11,7 +11,7 @@ import (
 
 func main() {
 	verifiedTokens := make(chan struct{})
-	currentBanner := NewBanner()
+	currentBanner := defaultBanner(500, 100)
 
 	config, err := readConfigFile()
 	if err != nil {
@@ -33,7 +33,7 @@ func main() {
 			fmt.Fprint(w, err.Error())
 			return
 		}
-		updateSVG(userCreds, config, currentBanner)
+		updateSVG(userCreds, config)
 		_, html := setupSuccessMsgs()
 		fmt.Fprint(w, html)
 		verifiedTokens <- struct{}{}
@@ -54,16 +54,16 @@ func main() {
 		}
 	}
 
-	lastSVGGeneration := time.Unix(0,0)
+	lastSVGGeneration := time.Unix(0, 0)
 	http.HandleFunc("/stats.svg", func(w http.ResponseWriter, r *http.Request) {
-		if time.Since(lastSVGGeneration) > time.Minute * 2 {
-			updateSVG(userCredentials, config, currentBanner)
+		if time.Since(lastSVGGeneration) > time.Minute*2 {
+			currentBanner = updateSVG(userCredentials, config)
 			lastSVGGeneration = time.Now()
 		}
 
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
-		fmt.Fprint(w, currentBanner.svg)
+		fmt.Fprint(w, currentBanner)
 	})
 
 	pt, _ := setupSuccessMsgs()
@@ -88,14 +88,16 @@ func handlerUserCredentials(userAuthCode string, config Config) (UserCredentials
 	return userCreds, nil
 }
 
-func updateSVG(uc UserCredentials, config Config, banner *Banner) {
+func updateSVG(uc UserCredentials, config Config) string {
 	hrts, err := heartRateTimesSeries(uc, config)
 	if err != nil {
 		log.Print("Error grabbing time series", err.Error())
-		return
+		return defaultBanner(500, 100)
 	}
-	_, err = banner.GenSVG(hrts, config.DisplayGetSource)
+	banner, err := genBanner(hrts, config.DisplayGetSource)
 	if err != nil {
-		log.Print("Error generating SVG: ", err.Error())
+		log.Print("Error generating banner: ", err.Error())
+		return defaultBanner(500, 100)
 	}
+	return banner
 }

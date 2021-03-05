@@ -71,7 +71,7 @@ func setupSuccessMsgs() (plaintext, html string) {
 	return plaintext, html
 }
 
-// heartRateTimesSeries returns the heart rate time series from the past four hours in a plottable format by Banner.GenSVG.
+// heartRateTimesSeries returns the heart rate time series from the past four hours in a plottable format.
 func heartRateTimesSeries(userCreds UserCredentials, appCredentials Config) ([]BannerXY, error) {
 	hrts, err := rawHeartRateTimeSeries(userCreds)
 	if err != nil {
