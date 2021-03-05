@@ -28,6 +28,7 @@ func main() {
 
 	http.HandleFunc("/stats.svg", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
 		fmt.Fprint(w, currentBanner.svg)
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
