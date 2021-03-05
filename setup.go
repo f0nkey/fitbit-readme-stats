@@ -80,6 +80,10 @@ func heartRateTimesSeries(userCreds UserCredentials, appCredentials Config) ([]B
 			if err != nil {
 				return nil, fmt.Errorf("error refreshing tokens and credentials: %w", err)
 			}
+			err = writeUserCredsFile(userCreds)
+			if err != nil {
+				return nil, fmt.Errorf("error writing user credentials: %w", err)
+			}
 			hrts, err = rawHeartRateTimeSeries(userCreds)
 			if err != nil {
 				return nil, fmt.Errorf("error grabbing heartrate data after token refresh: %w", err)
