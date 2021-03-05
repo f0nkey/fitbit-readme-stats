@@ -9,19 +9,19 @@ Plots your heart rate from your FitBit watch in an animated SVG. Embeddable in y
 Inspired by https://github.com/anuraghazra/github-readme-stats
 
 ## Setup
-1. Execute the latest binary from releases on your personal machine.
+1. Execute the latest binary with the `-setup` flag. (`fitbitplot -setup`) on your personal machine.
 
-2. Follow the steps it displays to the terminal to generate your credential and config files.
+2. Follow the steps it displays to the terminal.
 
-3. Afterwards, you can run the binary on your host machine with the generated `config.json` and `credentials.json`.
+3. Execute the binary on your desired host (without the `-setup` flag). Include the generated `config.json` in the same directory.
 
 4. Use `![FitBit Heart Rate Chart](http://HOSTIP:8090/stats.svg)` as a README.md embed.
-
-The SVG is hosted at http://HOSTIP:8090/stats.svg. 
+   The SVG is hosted at http://HOSTIP:8090/stats.svg.
 
 ## Todo:
 - Add releases
 - Add customizable title
+- Add theming
 - Add timezone display based on user's timezone
 
 
