@@ -84,7 +84,7 @@ var BannerTicker = func(timeSeries plotter.XYs) plot.TickerFunc {
 func NewBanner() *Banner {
 	b := &Banner{}
 	b.svg = defaultBanner(500, 100)
-	return &Banner{}
+	return b
 }
 
 func defaultBanner(width, height int) string {
