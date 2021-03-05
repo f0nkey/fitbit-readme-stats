@@ -80,6 +80,20 @@ func defaultBanner(width, height int) string {
 	return banner
 }
 
+func updateSVG(config Config) string {
+	hrts, err := heartRateTimesSeries(&config)
+	if err != nil {
+		log.Print("Error grabbing time series", err.Error())
+		return defaultBanner(500, 100)
+	}
+	banner, err := genBanner(hrts, config.DisplaySourceLink)
+	if err != nil {
+		log.Print("Error generating banner: ", err.Error())
+		return defaultBanner(500, 100)
+	}
+	return banner
+}
+
 // genBanner generates the full banner svg from data in arg xy.
 // Last x value in arg xy is used as current BPM in the middle of the heart.
 func genBanner(xy []BannerXY, enableWatermark bool) (string, error) {
