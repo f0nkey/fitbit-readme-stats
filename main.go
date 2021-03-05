@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	var currentBanner = NewBanner()
-	var verifiedTokens = make(chan struct{})
+	verifiedTokens := make(chan struct{})
+	currentBanner := NewBanner()
 
 	config, err := readConfigFile()
 	if err != nil {
@@ -26,11 +26,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/stats.svg", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
-		w.Header().Set("Cache-Control", "no-store")
-		fmt.Fprint(w, currentBanner.svg)
-	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		userAuthCode := r.URL.Query().Get("code")
 		userCreds, err := handlerUserCredentials(userAuthCode, config)
@@ -59,12 +54,18 @@ func main() {
 		}
 	}
 
-	go func() {
-		for {
+	lastSVGGeneration := time.Unix(0,0)
+	http.HandleFunc("/stats.svg", func(w http.ResponseWriter, r *http.Request) {
+		if time.Since(lastSVGGeneration) > time.Minute * 2 {
 			updateSVG(userCredentials, config, currentBanner)
-			time.Sleep(time.Minute * 2)
+			lastSVGGeneration = time.Now()
 		}
-	}()
+
+		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		fmt.Fprint(w, currentBanner.svg)
+	})
+
 	pt, _ := setupSuccessMsgs()
 	fmt.Println(pt)
 	noExit := make(chan bool)
