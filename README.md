@@ -20,9 +20,12 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
 
 ## Todo:
 - Add releases
-- Add customizable title
-- Add theming
-- Add timezone display based on user's timezone
+- Add config options  
+   - Add customizable title
+   - Add theming
+   - Add plot range
+- Add timezone display based on user's timezone (currently uses host's tz)
+
 
 
 
