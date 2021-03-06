@@ -32,6 +32,6 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
 | `app_credentials` | Holds generated fields when a new app is made at https://dev.fitbit.com/. |
 | `user_credentials` | Holds credentials to authenticate with and request from the FitBit Web API. Don't share it with anyone! |
 
-## Todo:
+## Todo
 - Add timezone display based on user's timezone (currently uses host's tz)
 - Add flatline for times when watch is taken off
