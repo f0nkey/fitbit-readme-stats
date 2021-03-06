@@ -9,7 +9,7 @@ Plots your heart rate from your FitBit watch in an animated SVG. Embeddable in y
 Inspired by https://github.com/anuraghazra/github-readme-stats
 
 ## Setup
-1. Execute the latest binary with the `-setup` flag. (`fitbitplot -setup`) on your personal machine.
+1. [Execute the latest binary](https://github.com/f0nkey/fitbit-readme-stats/releases) with the `-setup` flag. (`fitbitplot -setup`) on your personal machine.
 
 2. Follow the steps it displays to the terminal to generate `config.json`.
 
