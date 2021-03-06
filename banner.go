@@ -11,24 +11,11 @@ import (
 	"gonum.org/v1/plot/vg/vgsvg"
 	"image/color"
 	"log"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
 )
-
-var (
-	// Birds of Paradise https://tmtheme-editor.herokuapp.com/#!/editor/theme/Birds%20of%20Paradise
-	ColorYellow = color.RGBA{R: 239, G: 172, B: 50, A: 255}
-	ColorCream  = color.RGBA{R: 230, G: 225, B: 196, A: 255}
-	ColorCoffee = color.RGBA{R: 50, G: 35, B: 35, A: 255}
-	ColorOrange = color.RGBA{R: 239, G: 93, B: 50, A: 255}
-)
-
-// HTMLCode converts a color.RGBA to a format usable in CSS e.g., "rgba(5,25,50,1)"
-func HTMLCode(c color.RGBA) string {
-	// todo: normalize c.A to a valid CSS range [0,1]
-	return fmt.Sprintf(`rgba(%d,%d,%d,%d)`, c.R, c.G, c.B, c.A)
-}
 
 // BannerXY represents a single point on the plot.
 type BannerXY struct {
@@ -37,28 +24,30 @@ type BannerXY struct {
 }
 
 type Theme struct {
-	Background string `json:"background"`
-	TextTicks string `json:"text_ticks"`
-	CurrentBPM string `json:"current_bpm"`
-	Title string `json:"title"`
-	Heart string `json:"heart"`
-	Axes string `json:"axes"`
+	Background  string `json:"background"`
+	TextTicks   string `json:"text_ticks"`
+	CurrentBPM  string `json:"current_bpm"`
+	Title       string `json:"title"`
+	Heart       string `json:"heart"`
+	Axes        string `json:"axes"`
+	PlotLine    string `json:"plot_line"`
+	HeartNumber string `json:"heart_number"`
 }
 
 type Template struct {
-	Width int
-	Height int
+	Width            int
+	Height           int
 	PaddingTopBottom int
-	Theme Theme
+	Theme            Theme
 
 	Plot string
 
-	Heart string
-	BPM int
+	Heart       string
+	BPM         int
 	BPMTextSize int
 
-	Title string
-	TitleSize int
+	Title         string
+	TitleSize     int
 	ShowWatermark bool
 }
 
@@ -101,28 +90,28 @@ var BannerTicker = func(timeSeries plotter.XYs) plot.TickerFunc {
 	}
 }
 
-func defaultBanner(width, height int) string {
-	bg := fmt.Sprintf(`<rect width="100%%" height="100%%" fill="%s" />`, HTMLCode(ColorCoffee))
-	t := fmt.Sprintf(`<text x="%d" y="%d" fill="%s" style="font-family: sans-serif; font-weight:500;" dominant-baseline="hanging" text-anchor="middle">Banner not setup yet, or no data within range is available.</text>`, width/2, height/2, HTMLCode(ColorCream))
-	banner := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" id="banner" width="%dpt" height="%dpt"> %s </svg>`, width, height, bg+t)
+func defaultBanner(c Config) string {
+	bg := fmt.Sprintf(`<rect width="100%%" height="100%%" fill="%s" />`, c.Theme.Background)
+	t := fmt.Sprintf(`<text x="%d" y="%d" fill="%s" style="font-family: sans-serif; font-weight:500;" dominant-baseline="hanging" text-anchor="middle">Banner not setup yet, or no data within range is available.</text>`, c.BannerWidth/2, c.BannerHeight/2, c.Theme.Title)
+	banner := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" id="banner" width="%dpt" height="%dpt"> %s </svg>`, c.BannerWidth, c.BannerHeight, bg+t)
 	return banner
 }
 
-func updateSVG(config Config) string {
-	hrts, err := heartRateTimesSeries(&config)
+func updateSVG(c Config) string {
+	hrts, err := heartRateTimesSeries(&c)
 	if err != nil {
 		log.Print("Error grabbing time series", err.Error())
-		return defaultBanner(500, 100)
+		return defaultBanner(c)
 	}
-	banner, err := genBanner(hrts, config.DisplaySourceLink)
+	banner, err := genBanner(hrts, c)
 	if err != nil {
 		log.Print("Error generating banner: ", err.Error())
-		return defaultBanner(500, 100)
+		return defaultBanner(c)
 	}
 	return banner
 }
 
-func genBanner(xy []BannerXY, showWatermark bool) (string, error) {
+func genBanner(xy []BannerXY, config Config) (string, error) {
 	timeSeries := make(plotter.XYs, 0, len(xy))
 	for i := range xy {
 		timeSeries = append(timeSeries, plotter.XY{
@@ -133,34 +122,25 @@ func genBanner(xy []BannerXY, showWatermark bool) (string, error) {
 
 	bpm := 0
 	if len(timeSeries) <= 0 {
-		return defaultBanner(500, 100), fmt.Errorf("data set empty")
+		return defaultBanner(config), fmt.Errorf("data set empty")
 	}
 	bpm = int(timeSeries[len(timeSeries)-1].Y)
 
-	bannerWidth := 500 // in pts
-	bannerHeight := 100
-	thirdWidth := bannerWidth / 3 // heart takes up 1/3rd, plot 2/3rd
+	thirdWidth := config.BannerWidth / 3 // heart takes up 1/3rd, plot 2/3rd
 	plotWidth := thirdWidth * 2
 
 	tData := Template{
-		Width:            500,
-		Height:           100,
+		Width:            config.BannerWidth,
+		Height:           config.BannerHeight,
 		PaddingTopBottom: 20,
-		Theme: Theme{
-			Background:     HTMLCode(ColorCoffee),
-			TextTicks:       HTMLCode(ColorCream),
-			CurrentBPM: HTMLCode(ColorCream),
-			Title:      HTMLCode(ColorCream),
-			Heart:          HTMLCode(ColorYellow),
-			Axes:      HTMLCode(ColorOrange),
-		},
-		Plot:          genPlot(timeSeries, plotWidth, bannerHeight),
-		Heart:         genHeart(bpm, thirdWidth),
-		BPM:           bpm,
-		BPMTextSize:   19,
-		Title:         "Heart Rate from My FitBit Watch (Past 4 Hours)",
-		TitleSize:     12,
-		ShowWatermark: showWatermark,
+		Theme:            config.Theme,
+		Plot:             genPlot(timeSeries, plotWidth, config),
+		Heart:            genHeart(bpm, thirdWidth, config.Theme.Heart),
+		BPM:              bpm,
+		BPMTextSize:      19,
+		Title:            config.BannerTitle,
+		TitleSize:        12,
+		ShowWatermark:    config.DisplayViewOnGitHub,
 	}
 
 	t, err := template.New("banner").Funcs(sprig.GenericFuncMap()).Parse(tmplSVG)
@@ -176,7 +156,43 @@ func genBanner(xy []BannerXY, showWatermark bool) (string, error) {
 	return b.String(), nil
 }
 
-func genPlot(timeSeries plotter.XYs, width, height int) string {
+// RGBAFromString parses a color.RGBA from a string e.g. rgba(255,20,147,100).
+func RGBAFromString(s string) color.RGBA {
+	nums := s[strings.Index(s, "(")+1 : strings.Index(s, ")")]
+	split := strings.Split(nums, ",")
+	if len(split) != 4 {
+		log.Println("Invalid theme color:", s)
+		return color.RGBA{}
+	}
+	r, err := strconv.Atoi(strings.TrimSpace(split[0]))
+	if err != nil {
+		log.Println("Error converting theme color r component:", s)
+		return color.RGBA{}
+	}
+	g, err := strconv.Atoi(strings.TrimSpace(split[1]))
+	if err != nil {
+		log.Println("Error converting theme color g component:", s)
+		return color.RGBA{}
+	}
+	b, err := strconv.Atoi(strings.TrimSpace(split[2]))
+	if err != nil {
+		log.Println("Error converting theme color b component:", s)
+		return color.RGBA{}
+	}
+	a, err := strconv.Atoi(strings.TrimSpace(split[3]))
+	if err != nil {
+		log.Println("Error converting theme color a component:", s)
+		return color.RGBA{}
+	}
+	return color.RGBA{
+		R: uint8(r),
+		G: uint8(g),
+		B: uint8(b),
+		A: uint8(a),
+	}
+}
+
+func genPlot(timeSeries plotter.XYs, width int, config Config) string {
 	p := plot.New()
 
 	p.X.Tick.Marker = plot.TimeTicks{
@@ -185,23 +201,25 @@ func genPlot(timeSeries plotter.XYs, width, height int) string {
 		Time:   nil,
 	}
 
-	p.X.Tick.LineStyle.Color = ColorOrange
-	p.X.LineStyle.Color = ColorOrange
-	p.Y.Tick.LineStyle.Color = ColorOrange
-	p.Y.LineStyle.Color = ColorOrange
-	p.Y.Label.TextStyle.Color = ColorCream
-	p.X.Label.TextStyle.Color = ColorCream
-	p.X.Tick.Label.Color = ColorCream
-	p.Y.Tick.Label.Color = ColorCream
-	p.BackgroundColor = ColorCoffee
+	p.X.Tick.LineStyle.Color = RGBAFromString(config.Theme.Axes)
+	p.X.LineStyle.Color = RGBAFromString(config.Theme.Axes)
+	p.Y.Tick.LineStyle.Color = RGBAFromString(config.Theme.Axes)
+	p.Y.LineStyle.Color = RGBAFromString(config.Theme.Axes)
+
+	p.Y.Label.TextStyle.Color = RGBAFromString(config.Theme.TextTicks)
+	p.X.Label.TextStyle.Color = RGBAFromString(config.Theme.TextTicks)
+	p.X.Tick.Label.Color = RGBAFromString(config.Theme.TextTicks)
+	p.Y.Tick.Label.Color = RGBAFromString(config.Theme.TextTicks)
+
+	p.BackgroundColor = RGBAFromString(config.Theme.Background)
 
 	line, err := plotter.NewLine(timeSeries)
 	if err != nil {
 		log.Panic(err)
 	}
-	line.Color = ColorYellow
+	line.Color = RGBAFromString(config.Theme.PlotLine)
 	p.Add(line)
-	vgCanvas := vgsvg.New(vg.Length(width), vg.Length(height))
+	vgCanvas := vgsvg.New(vg.Length(width), vg.Length(config.BannerHeight))
 	drawCanvas := draw.New(vgCanvas)
 	drawCanvas = draw.Crop(drawCanvas, 0, 0, 0, -5) // prevents top y axis label from getting chopped
 	p.Draw(drawCanvas)
@@ -220,7 +238,7 @@ func genPlot(timeSeries plotter.XYs, width, height int) string {
 	return plotSVG
 }
 
-func genHeart(bpm int, width int) string {
+func genHeart(bpm int, width int, heartColor string) string {
 	// https://codepen.io/tutsplus/pen/MLBMRw
 	viewBox := width + width/3
 	gOffset := viewBox / 2
@@ -238,9 +256,9 @@ func genHeart(bpm int, width int) string {
 			</animateTransform>
 		</g>
 	</svg>
-	`, width, width, viewBox, viewBox, gOffset, gOffset, HTMLCode(ColorYellow), 60000/bpm)
+	`, width, width, viewBox, viewBox, gOffset, gOffset, heartColor, 60000/bpm)
 
-	heart = fmt.Sprintf(`<g transform="translate(%d %d)"> %s </g>`,0,-22,heart)
+	heart = fmt.Sprintf(`<g transform="translate(%d %d)"> %s </g>`, 0, -22, heart)
 	return heart
 }
 
@@ -270,7 +288,7 @@ var tmplSVG = `
 			<g id="heart-text" transform="translate( {{ $WidthBy3 := div .Width 3 }} {{ div $WidthBy3 2 }} {{ div .Height 2 }})">
 				<text id="current-bpm-text" class="text" text-anchor="middle" x="0" y="79">Current BPM</text>
 				<text id="bpm-number" class="text" dominant-baseline="middle" text-anchor="middle" x="0" y="0">{{ .BPM }}</text>
-				<style> #current-bpm-text {font-size: {{ .BPMTextSize }}pt; fill: {{ .Theme.CurrentBPM}};}  #bpm-number {font-size: 35px; fill: {{ .Theme.Background }};}</style>
+				<style> #current-bpm-text {font-size: {{ .BPMTextSize }}pt; fill: {{ .Theme.CurrentBPM}};}  #bpm-number {font-size: 35px; fill: {{ .Theme.HeartNumber }};}</style>
 			</g>
 		</g>
 	</g>

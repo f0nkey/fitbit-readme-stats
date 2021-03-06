@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 func main() {
-	port := flag.String("port", "8090", "port to serve the banner on")
 	setupMode := flag.Bool("setup", false, "true will make the binary run through the setup process to generate credentials.json, false will serve the SVG normally")
 	flag.Parse()
 
@@ -29,9 +29,9 @@ func main() {
 	}
 
 	lastSVGGeneration := time.Unix(0, 0)
-	currentBanner := defaultBanner(500, 100)
+	currentBanner := defaultBanner(config)
 	http.HandleFunc("/stats.svg", func(w http.ResponseWriter, r *http.Request) {
-		if time.Since(lastSVGGeneration) > time.Minute*2 {
+		if time.Since(lastSVGGeneration) > time.Second*time.Duration(config.CacheInvalidationTime) {
 			currentBanner = updateSVG(config)
 			lastSVGGeneration = time.Now()
 		}
@@ -41,7 +41,7 @@ func main() {
 		fmt.Fprint(w, currentBanner)
 	})
 	fmt.Println("Ensure Bluetooth is enabled on your phone so data can sync to FitBit's servers.")
-	fmt.Println("Use the following README embed:", "![FitBit Heart Rate Chart](http://HOSTIP:8090/stats.svg)")
-	fmt.Println("Serving on port", *port + ".")
-	http.ListenAndServe(":" + *port, nil)
+	fmt.Println("Use the following README embed:", "![FitBit Heart Rate Chart](http://HOSTIP:"+strconv.Itoa(config.Port)+"/stats.svg)")
+	fmt.Println("Serving on port", strconv.Itoa(config.Port)+".")
+	http.ListenAndServe(":"+strconv.Itoa(config.Port), nil)
 }

@@ -8,25 +8,47 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 // Config holds configuration set by command line flags and credentials from FitBit.
 type Config struct {
-	// todo: fields for banner size, cache invalidation time, theme colors, banner title
+	// Port is the port to serve the SVG on.
+	Port int `json:"port"`
 
-	// DisplaySourceLink when true displays watermark/link to the GitHub repo in the top right.
-	DisplaySourceLink bool            `json:"display_source_link"`
+	// BannerTitle is the title at the top of the banner.
+	BannerTitle string `json:"banner_title"`
+
+	// CacheInvalidationTime is how long (in seconds) before new heart-rate data should be requested from FitBit's server to make the plot.
+	CacheInvalidationTime int `json:"cache_invalidation_time"`
+
+	// PlotRange is the time interval (in hours) to look back for heart-rate data.
+	PlotRange int `json:"plot_range"`
+
+	// BannerWidth is the width of the generated .SVG.
+	BannerWidth int `json:"banner_width"`
+
+	// BannerHeight is the height of the generated .SVG.
+	BannerHeight int `json:"banner_height"`
+
+	// DisplayViewOnGitHub when true displays watermark/link to the GitHub repo in the top left.
+	DisplayViewOnGitHub bool `json:"display_view_on_github"`
+
+	// Theme represents the theme of the banner.
+	Theme Theme `json:"theme"`
+
 	// AppCredentials holds generated fields when a new app is made at https://dev.fitbit.com/.
-	AppCredentials    AppCredentials  `json:"app_credentials"`
+	AppCredentials AppCredentials `json:"app_credentials"`
+
 	// UserCredentials holds credentials to authenticate with and request from the FitBit Web API.
-	UserCredentials   UserCredentials `json:"user_credentials"`
+	UserCredentials UserCredentials `json:"user_credentials"`
 }
 
 // AppCredentials holds generated fields when a new app is made at https://dev.fitbit.com/.
 type AppCredentials struct {
-	OAuthClientID    string `json:"oauth_client_id"`
-	ClientSecret     string `json:"client_secret"`
+	OAuthClientID string `json:"oauth_client_id"`
+	ClientSecret  string `json:"client_secret"`
 }
 
 // UserCredentials holds credentials to authenticate with and request from the FitBit Web API.
@@ -41,24 +63,41 @@ type UserCredentials struct {
 	UserID string `json:"user_id"`
 }
 
-
 func setupProcess() {
 	file, err := os.OpenFile("config.json", os.O_RDONLY, 0644)
 	if !errors.Is(err, os.ErrNotExist) {
 		fmt.Println("config.json found. Press y and Enter to continue setup and overwrite this config.json.")
 		s := ""
 		fmt.Scanln(&s)
-		if s != "y"{
+		if s != "y" {
 			os.Exit(0)
 		}
 	}
 	file.Close()
 
-	err = writeConfigFile(Config{
-		DisplaySourceLink: false,
-		AppCredentials:    AppCredentials{},
-		UserCredentials:   UserCredentials{},
-	})
+	config := Config{
+		Port:                  8090,
+		BannerTitle:           "My Heart Rate From My FitBit Watch (Past 4 Hours)",
+		CacheInvalidationTime: 180,
+		PlotRange:             4,
+		Theme: Theme{ // https://tmtheme-editor.herokuapp.com/#!/editor/theme/Birds%20of%20Paradise
+			Background:  "rgba(50, 35, 35, 255)",
+			TextTicks:   "rgba(230, 225, 196, 255)",
+			CurrentBPM:  "rgba(230, 225, 196, 255)",
+			Title:       "rgba(230, 225, 196, 255)",
+			Heart:       "rgba(239, 172, 50, 255)",
+			Axes:        "rgba(239, 93, 50, 255)",
+			PlotLine:    "rgba(239, 172, 50, 255)",
+			HeartNumber: "rgba(50, 35, 35, 255)",
+		},
+		BannerWidth:         500,
+		BannerHeight:        100,
+		DisplayViewOnGitHub: false,
+		AppCredentials:      AppCredentials{},
+		UserCredentials:     UserCredentials{},
+	}
+
+	err = writeConfigFile(config)
 	if err != nil {
 		fmt.Print("Error generating empty config file:", err)
 		pressEnterToExit()
@@ -67,11 +106,8 @@ func setupProcess() {
 	fmt.Print("Entering Setup Mode ...")
 	appCreds := askAppCredentials()
 	userCreds := askUserCredentials(appCreds)
-	config := Config{
-		DisplaySourceLink: false,
-		AppCredentials:    appCreds,
-		UserCredentials:   userCreds,
-	}
+	config.AppCredentials = appCreds
+	config.UserCredentials = userCreds
 	err = writeConfigFile(config)
 	if err != nil {
 		fmt.Println("Error writing to config file:", err)
@@ -81,7 +117,7 @@ func setupProcess() {
 	fmt.Println("Step 3. Host")
 	fmt.Println("Setup is complete! Run this binary WITHOUT the setup flag to host the banner at http://HOSTIP:8090/stats.svg.")
 	fmt.Println("Run the binary with the flag -h to see configuration options (port, etc).")
-	fmt.Println("README.md Embed: ![FitBit Heart Rate Chart](http://HOSTIP:8090/stats.svg)")
+	fmt.Println("README.md Embed: ![FitBit Heart Rate Chart](http://HOSTIP:" + strconv.Itoa(config.Port) + "/stats.svg)")
 	fmt.Println("Press the Enter Key to exit.")
 	fmt.Scanln()
 }
@@ -124,7 +160,6 @@ func askAppCredentials() AppCredentials {
 func askUserCredentials(appCreds AppCredentials) UserCredentials {
 	fmt.Println("\n=========")
 	fmt.Println("Step 2. Getting User Credentials")
-	fmt.Println("Generated user credentials file.")
 	fmt.Println("Follow this link (leave this binary running): ", tokensLink(appCreds.OAuthClientID))
 
 	userCreds := UserCredentials{}
@@ -136,11 +171,11 @@ func askUserCredentials(appCreds AppCredentials) UserCredentials {
 		var err error
 		userCreds, err = requestUserCredentials(userAuthCode, appCreds)
 		if err != nil {
-			fmt.Fprint(w,"Error encountered. See console for further instructions.")
+			fmt.Fprint(w, "Error encountered. See console for further instructions.")
 			fmt.Println(w, "Error requesting user credentials", err)
 			pressEnterToExit()
 		}
-		fmt.Fprint(w,"Setup complete! See console for further instructions.")
+		fmt.Fprint(w, "Setup complete! See console for further instructions.")
 	})
 	go http.ListenAndServe(":8090", nil)
 

@@ -18,17 +18,20 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
 4. Use `![FitBit Heart Rate Chart](http://HOSTIP:8090/stats.svg)` as a README.md embed.
    The SVG is hosted at http://HOSTIP:8090/stats.svg.
 
+## Config Documentation
+| JSON Field  | Description   |
+|-------------|---------------|
+| `port` | The port to serve the SVG on. |
+| `banner_title` | The title at the top of the banner. |
+| `cache_invalidation_time` | How long (in seconds) before new heart-rate data should be requested from FitBit's servers. Checked every SVG request. |
+| `plot_range` | The time interval (in hours) to look back for heart-rate data. |
+| `banner_width` | The width of the generated .SVG. |
+| `banner_height` | The height of the generated .SVG. |
+| `display_view_on_github` | When true, displays watermark/link to this GitHub repo in the top left. |
+| `theme` | Colors for each element. Represented as: `rgba(255, 255, 255, 255)` |
+| `app_credentials` | Holds generated fields when a new app is made at https://dev.fitbit.com/. |
+| `user_credentials` | Holds credentials to authenticate with and request from the FitBit Web API. Don't share it with anyone! |
+
 ## Todo:
-- Add releases
-- Add config options  
-   - Add customizable title
-   - Add theming
-   - Add plot range
 - Add timezone display based on user's timezone (currently uses host's tz)
 - Add flatline for times when watch is taken off
-
-
-
-
-
-

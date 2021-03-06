@@ -58,7 +58,7 @@ func requestUserCredentials(userAuthCode string, config AppCredentials) (UserCre
 // heartRateTimesSeries returns the heart rate time series from the past four hours in a plottable format.
 // Side Effects: May write to config.json and edit the config argument with a refresh token if token expired.
 func heartRateTimesSeries(config *Config) ([]BannerXY, error) {
-	hrts, err := rawHeartRateTimeSeries(config.UserCredentials)
+	hrts, err := rawHeartRateTimeSeries(config.UserCredentials, *config)
 	if err != nil {
 		if err.Error() == "token must be refreshed" {
 			userCreds, err := reqUserCredentials(config.AppCredentials, "", config.UserCredentials.RefreshToken)
@@ -70,7 +70,7 @@ func heartRateTimesSeries(config *Config) ([]BannerXY, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error writing to config file after getting refresh token: %w", err)
 			}
-			hrts, err = rawHeartRateTimeSeries(config.UserCredentials)
+			hrts, err = rawHeartRateTimeSeries(config.UserCredentials, *config)
 			if err != nil {
 				return nil, fmt.Errorf("error grabbing heartrate data after token refresh: %w", err)
 			}
@@ -177,10 +177,10 @@ func prependZero(i int) string {
 }
 
 // rawHeartRateTimeSeries returns heartrate-time data from FitBit.
-func rawHeartRateTimeSeries(userCreds UserCredentials) (HeartRateTimeSeries, error) {
+func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRateTimeSeries, error) {
 	u := `https://api.fitbit.com/1/user/%s/activities/heart/date/%s/%s/1min/time/%s/%s.json`
 	// todo: query Get Profile endpoint to offset timezone by their UTC offset: GET https://api.fitbit.com/1/user/[user-id]/profile.json
-	var hourRange int = 4
+	hourRange := config.PlotRange
 	tRange := time.Hour * time.Duration(hourRange)
 	endDate, endHr := dateHour(time.Now())
 	startDate, startHr := dateHour(time.Now().Add(-tRange))
