@@ -25,6 +25,7 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
    - Add theming
    - Add plot range
 - Add timezone display based on user's timezone (currently uses host's tz)
+- Add flatline for times when watch is taken off
 
 
 

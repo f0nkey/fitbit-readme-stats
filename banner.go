@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/Masterminds/sprig"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
@@ -11,6 +12,7 @@ import (
 	"image/color"
 	"log"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -32,6 +34,32 @@ func HTMLCode(c color.RGBA) string {
 type BannerXY struct {
 	X time.Time
 	Y int
+}
+
+type Theme struct {
+	Background string `json:"background"`
+	TextTicks string `json:"text_ticks"`
+	CurrentBPM string `json:"current_bpm"`
+	Title string `json:"title"`
+	Heart string `json:"heart"`
+	Axes string `json:"axes"`
+}
+
+type Template struct {
+	Width int
+	Height int
+	PaddingTopBottom int
+	Theme Theme
+
+	Plot string
+
+	Heart string
+	BPM int
+	BPMTextSize int
+
+	Title string
+	TitleSize int
+	ShowWatermark bool
 }
 
 // BannerTicker is used to plot major and minor tick marks.
@@ -94,9 +122,7 @@ func updateSVG(config Config) string {
 	return banner
 }
 
-// genBanner generates the full banner svg from data in arg xy.
-// Last x value in arg xy is used as current BPM in the middle of the heart.
-func genBanner(xy []BannerXY, enableWatermark bool) (string, error) {
+func genBanner(xy []BannerXY, showWatermark bool) (string, error) {
 	timeSeries := make(plotter.XYs, 0, len(xy))
 	for i := range xy {
 		timeSeries = append(timeSeries, plotter.XY{
@@ -105,97 +131,49 @@ func genBanner(xy []BannerXY, enableWatermark bool) (string, error) {
 		})
 	}
 
-	banner := ""
 	bpm := 0
 	if len(timeSeries) <= 0 {
-		banner = defaultBanner(500, 100)
-		return banner, fmt.Errorf("data set empty")
+		return defaultBanner(500, 100), fmt.Errorf("data set empty")
 	}
 	bpm = int(timeSeries[len(timeSeries)-1].Y)
 
-	// todo: use template/html instead of ugly sprintfs
 	bannerWidth := 500 // in pts
 	bannerHeight := 100
 	thirdWidth := bannerWidth / 3 // heart takes up 1/3rd, plot 2/3rd
-	topBottomPadding := 20        // pts of whitespace split between top and bottom
-
 	plotWidth := thirdWidth * 2
-	plotSVG := fmt.Sprintf(`<g transform="translate(%d,%d)"> %s </g>`, thirdWidth, 0, genPlot(timeSeries, plotWidth, bannerHeight))
-	plotSVG = strings.ReplaceAll(plotSVG, `font-family:Times;font-weight:normal;font-style:normal;font-size:10px;`, "") // remove in-line style
-	plotSVG = strings.ReplaceAll(plotSVG, `<?xml version="1.0"?>`, "")                                                  // cannot have multiple xml tags
-	plotSVG = strings.ReplaceAll(plotSVG, "<text", `<text class="text"`)
 
-	heartWidth := thirdWidth
-	heartSVG := fmt.Sprintf(`<g transform="translate(%d %d)"> %s </g>`,
-		0,
-		-22,
-		genHeart(bpm, heartWidth))
-	heartTextSVG := fmt.Sprintf(`<g width="%d" height="%d" transform="translate(%d %d)"> %s </g>`,
-		0,
-		0,
-		thirdWidth/2,
-		bannerHeight/2,
-		genHeartText(bpm, bannerHeight),
-	)
-
-	titleHeight := 12 // in pts
-	titleSVG := genTitle("Heartrate From My FitBit Watch (Past 4 Hours)", titleHeight, bannerWidth/2)
-
-	waterMarkSVG := ""
-	if enableWatermark {
-		waterMarkSVG = genWatermark("Get Source", 8, 5)
+	tData := Template{
+		Width:            500,
+		Height:           100,
+		PaddingTopBottom: 20,
+		Theme: Theme{
+			Background:     HTMLCode(ColorCoffee),
+			TextTicks:       HTMLCode(ColorCream),
+			CurrentBPM: HTMLCode(ColorCream),
+			Title:      HTMLCode(ColorCream),
+			Heart:          HTMLCode(ColorYellow),
+			Axes:      HTMLCode(ColorOrange),
+		},
+		Plot:          genPlot(timeSeries, plotWidth, bannerHeight),
+		Heart:         genHeart(bpm, thirdWidth),
+		BPM:           bpm,
+		BPMTextSize:   19,
+		Title:         "Heart Rate from My FitBit Watch (Past 4 Hours)",
+		TitleSize:     12,
+		ShowWatermark: showWatermark,
 	}
 
-	bg := fmt.Sprintf(`<rect width="100%%" height="100%%" fill="%s" />`, HTMLCode(ColorCoffee))
-	style := fmt.Sprintf(`<style> .text {font: 600 9px "Arial", Sans-Serif; fill: %s;} </style>`, HTMLCode(ColorCream))
-	banner = fmt.Sprintf(`<svg id="banner" xmlns="http://www.w3.org/2000/svg" width="%dpt" height="%dpt"> <!-- Generated via https://github.com/f0nkey/fitbit-readme-stats --> %s <g id="padding" transform="translate(0 %d)"> %s <g transform="translate(0 %d)"> %s </g> </g> </svg>`, bannerWidth, bannerHeight+titleHeight+topBottomPadding, bg+style, topBottomPadding/2, waterMarkSVG+titleSVG, titleHeight+6, plotSVG+heartSVG+heartTextSVG)
+	t, err := template.New("banner").Funcs(sprig.GenericFuncMap()).Parse(tmplSVG)
+	if err != nil {
+		return "", err
+	}
+	b := new(bytes.Buffer)
+	err = t.Execute(b, tData)
+	if err != nil {
+		return "", err
+	}
 
-	return banner, nil
-}
-
-func genWatermark(text string, height, xOffset int) string {
-	style := fmt.Sprintf(`font: 600 %dpt 'Arial', Sans-Serif; fill: %s;`, height, HTMLCode(ColorCream))
-	return fmt.Sprintf(`<a href="https://github.com/f0nkey/fitbit-readme-stats"><text id="title" dominant-baseline="hanging" style="%s" x="%dpt"> %s </text></a>`, style, xOffset, text)
-}
-
-func genTitle(text string, height, xOffset int) string {
-	style := fmt.Sprintf(`font: 600 %dpt 'Arial', Sans-Serif; fill: %s`, height, HTMLCode(ColorCream))
-	return fmt.Sprintf(`<text id="title" dominant-baseline="hanging" text-anchor="middle" style="%s" x="%dpt"> %s </text>`, style, xOffset, text)
-}
-
-func genHeartText(bpm int, height int) string {
-	bpmTextSize := 19 // points
-	bpmTextOffset := height - bpmTextSize - 2
-	text := fmt.Sprintf(`
-		<text id="current-bpm-text" class="text" text-anchor="middle" x="%s" y="%d">Current BPM</text>
-		<text id="bpm-number" class="text" dominant-baseline="middle" text-anchor="middle" x="%s" y="%s">%d</text>
-		<style> #current-bpm-text {font-size: %dpt; fill: %s;}  #bpm-number {font-size: 35px; fill: %s;}</style>
-`, "0", bpmTextOffset, "0", "0", bpm, bpmTextSize, HTMLCode(ColorCream), HTMLCode(ColorCoffee))
-
-	return text
-}
-
-func genHeart(bpm int, width int) string {
-	// https://codepen.io/tutsplus/pen/MLBMRw
-	viewBox := width + width/3
-	gOffset := viewBox / 2
-	heart := fmt.Sprintf(`
-	<svg width="%d" height="%d" viewBox="0 0 %d %d">
-		<g transform="translate(%d %d)">
-			<path transform="translate(-50 -50)" fill="%s" d="M92.71,7.27L92.71,7.27c-9.71-9.69-25.46-9.69-35.18,0L50,14.79l-7.54-7.52C32.75-2.42,17-2.42,7.29,7.27v0 c-9.71,9.69-9.71,25.41,0,35.1L50,85l42.71-42.63C102.43,32.68,102.43,16.96,92.71,7.27z"></path>
-			<animateTransform 
-			  attributeName="transform" 
-			  type="scale" 
-			  values="1; 1.5; 1.25; 1;" 
-			  dur="%dms"
-			  additive="sum"
-			  repeatCount="indefinite">      
-			</animateTransform>
-		</g>
-	</svg>
-	`, width, width, viewBox, viewBox, gOffset, gOffset, HTMLCode(ColorYellow), 60000/bpm)
-
-	return heart
+	return b.String(), nil
 }
 
 func genPlot(timeSeries plotter.XYs, width, height int) string {
@@ -233,5 +211,67 @@ func genPlot(timeSeries plotter.XYs, width, height int) string {
 	if err != nil {
 		fmt.Println("could not write SVG", err)
 	}
-	return buf.String()
+	plotSVG := buf.String()
+
+	plotSVG = fmt.Sprintf(`<g transform="translate(%d,%d)"> %s </g>`, 0, 0, plotSVG)
+	plotSVG = strings.ReplaceAll(plotSVG, `font-family:Times;font-weight:normal;font-style:normal;font-size:10px;`, "") // remove in-line style
+	plotSVG = strings.ReplaceAll(plotSVG, `<?xml version="1.0"?>`, "")                                                  // cannot have multiple xml tags
+	plotSVG = strings.ReplaceAll(plotSVG, "<text", `<text class="text"`)
+	return plotSVG
 }
+
+func genHeart(bpm int, width int) string {
+	// https://codepen.io/tutsplus/pen/MLBMRw
+	viewBox := width + width/3
+	gOffset := viewBox / 2
+	heart := fmt.Sprintf(`
+	<svg width="%d" height="%d" viewBox="0 0 %d %d">
+		<g transform="translate(%d %d)">
+			<path transform="translate(-50 -50)" fill="%s" d="M92.71,7.27L92.71,7.27c-9.71-9.69-25.46-9.69-35.18,0L50,14.79l-7.54-7.52C32.75-2.42,17-2.42,7.29,7.27v0 c-9.71,9.69-9.71,25.41,0,35.1L50,85l42.71-42.63C102.43,32.68,102.43,16.96,92.71,7.27z"></path>
+			<animateTransform 
+			  attributeName="transform" 
+			  type="scale" 
+			  values="1; 1.5; 1.25; 1;" 
+			  dur="%dms"
+			  additive="sum"
+			  repeatCount="indefinite">      
+			</animateTransform>
+		</g>
+	</svg>
+	`, width, width, viewBox, viewBox, gOffset, gOffset, HTMLCode(ColorYellow), 60000/bpm)
+
+	heart = fmt.Sprintf(`<g transform="translate(%d %d)"> %s </g>`,0,-22,heart)
+	return heart
+}
+
+// language=SVG
+var tmplSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" id="banner" width="{{ .Width }}pt" height="{{add .Height .TitleSize .PaddingTopBottom }}pt">
+	<!-- Generated via https://github.com/f0nkey/fitbit-readme-stats -->
+	<rect width="100%" height="100%" fill="{{ .Theme.Background }}"/>
+	<style> .text {font: 600 9px "Arial", Sans-Serif; fill: {{ .Theme.Background }};} </style>
+	<g id="padding" transform="translate(0 {{ div .PaddingTopBottom 2 }})">
+		<text id="title" dominant-baseline="hanging" text-anchor="middle" style="font: 600 12pt 'Arial', Sans-Serif; fill: {{ .Theme.Title }}" x="{{div .Width 2}}pt"> 
+			{{.Title}}
+		</text>
+		{{ if .ShowWatermark }}
+			<a href="https://github.com/f0nkey/fitbit-readme-stats">
+				<text id="title" dominant-baseline="hanging" style="font: 600 8pt 'Arial', Sans-Serif; fill: {{ .Theme.Title }};" x="5pt">View on GitHub</text>
+			</a>
+		{{ end }}
+		<g id="main-content" transform="translate(0 {{ add .TitleSize 6 }})">
+			<g id="plot" transform="translate(166,0)">
+				<!-- Generated by SVGo and Plotinum VG -->
+				{{.Plot}}
+			</g>
+			<g id="heart">
+				{{ .Heart }}
+			</g>
+			<g id="heart-text" transform="translate( {{ $WidthBy3 := div .Width 3 }} {{ div $WidthBy3 2 }} {{ div .Height 2 }})">
+				<text id="current-bpm-text" class="text" text-anchor="middle" x="0" y="79">Current BPM</text>
+				<text id="bpm-number" class="text" dominant-baseline="middle" text-anchor="middle" x="0" y="0">{{ .BPM }}</text>
+				<style> #current-bpm-text {font-size: {{ .BPMTextSize }}pt; fill: {{ .Theme.CurrentBPM}};}  #bpm-number {font-size: 35px; fill: {{ .Theme.Background }};}</style>
+			</g>
+		</g>
+	</g>
+</svg>`
