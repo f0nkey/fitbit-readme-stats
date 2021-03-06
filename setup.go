@@ -43,8 +43,18 @@ type UserCredentials struct {
 
 
 func setupProcess() {
-	// todo: ask user if they want to overwrite the config file
-	err := writeConfigFile(Config{
+	file, err := os.OpenFile("config.json", os.O_RDONLY, 0644)
+	if !errors.Is(err, os.ErrNotExist) {
+		fmt.Println("config.json found. Press y and Enter to continue setup and overwrite this config.json.")
+		s := ""
+		fmt.Scanln(&s)
+		if s != "y"{
+			os.Exit(0)
+		}
+	}
+	file.Close()
+
+	err = writeConfigFile(Config{
 		DisplaySourceLink: false,
 		AppCredentials:    AppCredentials{},
 		UserCredentials:   UserCredentials{},
