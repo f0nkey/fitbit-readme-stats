@@ -11,7 +11,7 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
 ## Setup
 1. Execute the latest binary with the `-setup` flag. (`fitbitplot -setup`) on your personal machine.
 
-2. Follow the steps it displays to the terminal.
+2. Follow the steps it displays to the terminal to generate `config.json`.
 
 3. Execute the binary on your desired host (without the `-setup` flag). Include the generated `config.json` in the same directory.
 
