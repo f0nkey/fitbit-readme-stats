@@ -17,6 +17,9 @@ type Config struct {
 	// Port is the port to serve the SVG on.
 	Port int `json:"port"`
 
+	// Timezone is the timezone used for display and calculations. Will get a "no data available" error if different from tz on the FitBit app. https://en.wikipedia.org/wiki/List_of_UTC_time_offsets
+	Timezone int `json:"timezone"`
+
 	// BannerTitle is the title at the top of the banner.
 	BannerTitle string `json:"banner_title"`
 
@@ -75,8 +78,10 @@ func setupProcess() {
 	}
 	file.Close()
 
+	_, offset := time.Now().In(time.Local).Zone()
 	config := Config{
 		Port:                  8090,
+		Timezone: offset/3600,
 		BannerTitle:           "My Heart Rate From My FitBit Watch (Past 4 Hours)",
 		CacheInvalidationTime: 180,
 		PlotRange:             4,

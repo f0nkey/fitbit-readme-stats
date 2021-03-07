@@ -178,12 +178,15 @@ func prependZero(i int) string {
 
 // rawHeartRateTimeSeries returns heartrate-time data from FitBit.
 func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRateTimeSeries, error) {
-	u := `https://api.fitbit.com/1/user/%s/activities/heart/date/%s/%s/1min/time/%s/%s.json`
 	// todo: query Get Profile endpoint to offset timezone by their UTC offset: GET https://api.fitbit.com/1/user/[user-id]/profile.json
+	// right now, it grabs the personal computer's tz during setup, which may be different from fitbit's servers
 	hourRange := config.PlotRange
 	tRange := time.Hour * time.Duration(hourRange)
-	endDate, endHr := dateHour(time.Now())
-	startDate, startHr := dateHour(time.Now().Add(-tRange))
+	loc := time.FixedZone("zone", config.Timezone * 3600)
+	now := time.Now().UTC().In(loc)
+	endDate, endHr := dateHour(now)
+	startDate, startHr := dateHour(now.Add(-tRange))
+	u := `https://api.fitbit.com/1/user/%s/activities/heart/date/%s/%s/1min/time/%s/%s.json`
 	uri := fmt.Sprintf(u, userCreds.UserID, startDate, endDate, startHr, endHr)
 
 	r, err := http.NewRequest("GET", uri, nil)
@@ -215,8 +218,8 @@ func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRate
 		hr, _ := strconv.Atoi(sp[0])
 		min, _ := strconv.Atoi(sp[1])
 
-		today := time.Now()
-		yesterday := time.Now().Add(time.Hour * -24)
+		today := now
+		yesterday := now.Add(time.Hour * -24)
 		actualDay := today
 		if startDate != endDate { // determining actual date since fitbit does not include date in Datapoint.Time
 			if hr > hourRange {
