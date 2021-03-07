@@ -22,6 +22,7 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
 | JSON Field  | Description   |
 |-------------|---------------|
 | `port` | The port to serve the SVG on. |
+| `timezone` | Timezone as an integer hour offset from UTC. Value assumed based on computer's tz during setup. |
 | `banner_title` | The title at the top of the banner. |
 | `cache_invalidation_time` | How long (in seconds) before new heart-rate data should be requested from FitBit's servers. Checked every SVG request. |
 | `plot_range` | The time interval (in hours) to look back for heart-rate data. |
