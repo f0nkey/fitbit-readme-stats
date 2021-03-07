@@ -97,16 +97,16 @@ func defaultBanner(c Config) string {
 	return banner
 }
 
-func updateSVG(c Config) string {
-	hrts, err := heartRateTimesSeries(&c)
+func updateSVG(c *Config) string {
+	hrts, err := heartRateTimesSeries(c)
 	if err != nil {
 		log.Print("Error grabbing time series", err.Error())
-		return defaultBanner(c)
+		return defaultBanner(*c)
 	}
-	banner, err := genBanner(hrts, c)
+	banner, err := genBanner(hrts, *c)
 	if err != nil {
 		log.Print("Error generating banner: ", err.Error())
-		return defaultBanner(c)
+		return defaultBanner(*c)
 	}
 	return banner
 }
@@ -193,7 +193,7 @@ func RGBAFromString(s string) color.RGBA {
 }
 
 func genPlot(timeSeries plotter.XYs, width int, config Config) string {
-	p := plot.New()
+	p,_ := plot.New()
 
 	p.X.Tick.Marker = plot.TimeTicks{
 		Ticker: BannerTicker(timeSeries),

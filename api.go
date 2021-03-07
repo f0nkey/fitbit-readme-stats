@@ -232,7 +232,30 @@ func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRate
 			Value:    entry.Value,
 		})
 	}
-	ts.ActivitiesHeartIntraday.Dataset = dataset
+
+	continuousDataset := fillInGaps(dataset, 60)
+	ts.ActivitiesHeartIntraday.Dataset = continuousDataset
 
 	return ts, nil
+}
+
+// fillInGaps fills in gaps in the dataset with the previous datapoint, so ticks can be generated at hour marks.
+func fillInGaps(data []Datapoint, gapAmt int64) []Datapoint {
+	if len(data) == 0 {
+		return []Datapoint{}
+	}
+	start := data[0].DateTime.Unix()
+	for i, validTime := 1, start;
+		i < len(data);
+		i, validTime = i+1, validTime+gapAmt {
+		if data[i].DateTime.Unix() != validTime {
+			newEntry := Datapoint{
+				Time:     "",
+				DateTime: time.Unix(validTime,0),
+				Value:    data[i-1].Value,
+			}
+			data = append(data[:i], append([]Datapoint{newEntry}, data[i:]...)...)
+		}
+	}
+	return data
 }

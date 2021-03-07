@@ -32,7 +32,7 @@ func main() {
 	currentBanner := defaultBanner(config)
 	http.HandleFunc("/stats.svg", func(w http.ResponseWriter, r *http.Request) {
 		if time.Since(lastSVGGeneration) > time.Second*time.Duration(config.CacheInvalidationTime) {
-			currentBanner = updateSVG(config)
+			currentBanner = updateSVG(&config)
 			lastSVGGeneration = time.Now()
 		}
 
