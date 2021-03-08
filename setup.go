@@ -81,7 +81,7 @@ func setupProcess() {
 	_, offset := time.Now().In(time.Local).Zone()
 	config := Config{
 		Port:                  8090,
-		Timezone: offset/3600,
+		Timezone:              offset / 3600,
 		BannerTitle:           "My Heart Rate From My FitBit Watch (Past 4 Hours)",
 		CacheInvalidationTime: 180,
 		PlotRange:             4,

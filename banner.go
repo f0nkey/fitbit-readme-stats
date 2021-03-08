@@ -193,7 +193,7 @@ func RGBAFromString(s string) color.RGBA {
 }
 
 func genPlot(timeSeries plotter.XYs, width int, config Config) string {
-	p,_ := plot.New()
+	p, _ := plot.New()
 
 	p.X.Tick.Marker = plot.TimeTicks{
 		Ticker: BannerTicker(timeSeries),

@@ -100,6 +100,7 @@ func reqUserCredentials(appCred AppCredentials, userAuthCode string, refreshToke
 		vals.Set("grant_type", "refresh_token")
 		vals.Set("refresh_token", refreshToken)
 	}
+
 	vals.Add("redirect_uri", "http://localhost:8090")
 	vals.Add("code", userAuthCode)
 	r := strings.NewReader(vals.Encode())
@@ -182,7 +183,7 @@ func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRate
 	// right now, it grabs the personal computer's tz during setup, which may be different from fitbit's servers
 	hourRange := config.PlotRange
 	tRange := time.Hour * time.Duration(hourRange)
-	loc := time.FixedZone("zone", config.Timezone * 3600)
+	loc := time.FixedZone("zone", config.Timezone*3600)
 	now := time.Now().UTC().In(loc)
 	endDate, endHr := dateHour(now)
 	startDate, startHr := dateHour(now.Add(-tRange))
@@ -200,7 +201,19 @@ func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRate
 		return HeartRateTimeSeries{}, err
 	}
 	if resp.StatusCode == 401 {
-		return HeartRateTimeSeries{}, errors.New("token must be refreshed")
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return HeartRateTimeSeries{}, err
+		}
+		apiErr := APIError{}
+		err = json.Unmarshal(b, &apiErr)
+		if err != nil {
+			return HeartRateTimeSeries{}, err
+		}
+		if strings.Contains(apiErr.Errors[0].Message, "Access token expired") {
+			return HeartRateTimeSeries{}, fmt.Errorf("token must be refreshed")
+		}
+		return HeartRateTimeSeries{}, fmt.Errorf(apiErr.Errors[0].Message)
 	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -245,13 +258,11 @@ func fillInGaps(data []Datapoint, gapAmt int64) []Datapoint {
 		return []Datapoint{}
 	}
 	start := data[0].DateTime.Unix()
-	for i, validTime := 1, start;
-		i < len(data);
-		i, validTime = i+1, validTime+gapAmt {
+	for i, validTime := 1, start; i < len(data); i, validTime = i+1, validTime+gapAmt {
 		if data[i].DateTime.Unix() != validTime {
 			newEntry := Datapoint{
 				Time:     "",
-				DateTime: time.Unix(validTime,0),
+				DateTime: time.Unix(validTime, 0),
 				Value:    data[i-1].Value,
 			}
 			data = append(data[:i], append([]Datapoint{newEntry}, data[i:]...)...)

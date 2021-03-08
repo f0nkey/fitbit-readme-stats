@@ -14,7 +14,7 @@ func TestFillInGaps(t *testing.T) {
 		for i := 2; i < len(fixed); i++ {
 			thisGap := fixed[i].DateTime.Unix() - fixed[i-1].DateTime.Unix()
 			if thisGap != gap {
-				return fmt.Errorf("unequal gaps: (i=%d) %d - %d = %d; (i=%d) %d - %d = %d;", i, fixed[i].DateTime.Unix(),fixed[i-1].DateTime.Unix(), thisGap, i-1, fixed[i-1].DateTime.Unix(),fixed[i-2].DateTime.Unix(), gap)
+				return fmt.Errorf("unequal gaps: (i=%d) %d - %d = %d; (i=%d) %d - %d = %d;", i, fixed[i].DateTime.Unix(), fixed[i-1].DateTime.Unix(), thisGap, i-1, fixed[i-1].DateTime.Unix(), fixed[i-2].DateTime.Unix(), gap)
 			}
 			gap = thisGap
 		}
@@ -36,25 +36,25 @@ func TestFillInGaps(t *testing.T) {
 		return nil
 	}
 	{
-		original := make([]Datapoint,0,0)
+		original := make([]Datapoint, 0, 0)
 		fillInGaps(original, 60)
 	}
 	{
 		original := []Datapoint{
-			{Time:"", DateTime: time.Unix(60, 0), Value: 60},
-			{Time:"", DateTime: time.Unix(120, 0), Value: 120},
-			{Time:"", DateTime: time.Unix(180, 0), Value: 180},
-			{Time:"", DateTime: time.Unix(240, 0), Value: 240},
-			{Time:"", DateTime: time.Unix(300, 0), Value: 300},
-			{Time:"", DateTime: time.Unix(360, 0), Value: 360},
+			{Time: "", DateTime: time.Unix(60, 0), Value: 60},
+			{Time: "", DateTime: time.Unix(120, 0), Value: 120},
+			{Time: "", DateTime: time.Unix(180, 0), Value: 180},
+			{Time: "", DateTime: time.Unix(240, 0), Value: 240},
+			{Time: "", DateTime: time.Unix(300, 0), Value: 300},
+			{Time: "", DateTime: time.Unix(360, 0), Value: 360},
 		}
 		wrong := []Datapoint{
-			{Time:"", DateTime: time.Unix(60, 0), Value: 60},
-			{Time:"", DateTime: time.Unix(120, 0), Value: 120},
+			{Time: "", DateTime: time.Unix(60, 0), Value: 60},
+			{Time: "", DateTime: time.Unix(120, 0), Value: 120},
 			// 180 omitted
 			// 240 omitted
 			// 300 omitted
-			{Time:"", DateTime: time.Unix(360, 0), Value: 360},
+			{Time: "", DateTime: time.Unix(360, 0), Value: 360},
 		}
 		fixed := fillInGaps(wrong, 60)
 		err := test(original, fixed)
@@ -64,11 +64,11 @@ func TestFillInGaps(t *testing.T) {
 	}
 	{
 		wrong := []Datapoint{
-			{Time:"", DateTime: time.Date(2021, 03, 06, 16, 49, 00, 00, time.UTC), Value: 5},
-			{Time:"", DateTime: time.Date(2021, 03, 06, 16, 50, 00, 00, time.UTC), Value: 8},
+			{Time: "", DateTime: time.Date(2021, 03, 06, 16, 49, 00, 00, time.UTC), Value: 5},
+			{Time: "", DateTime: time.Date(2021, 03, 06, 16, 50, 00, 00, time.UTC), Value: 8},
 			// 15 minutes omitted
-			{Time:"", DateTime: time.Date(2021, 03, 06, 17, 5, 00, 00, time.UTC), Value: 8},
-			{Time:"", DateTime: time.Date(2021, 03, 06, 17, 6, 00, 00, time.UTC), Value: 8},
+			{Time: "", DateTime: time.Date(2021, 03, 06, 17, 5, 00, 00, time.UTC), Value: 8},
+			{Time: "", DateTime: time.Date(2021, 03, 06, 17, 6, 00, 00, time.UTC), Value: 8},
 		}
 		fixed := fillInGaps(wrong, 60)
 
@@ -78,15 +78,15 @@ func TestFillInGaps(t *testing.T) {
 		}
 	}
 	{
-		original := make([]Datapoint,0,100)
-		for i := 0; i < 60*100; i+=60 {
+		original := make([]Datapoint, 0, 100)
+		for i := 0; i < 60*100; i += 60 {
 			original = append(original, Datapoint{
 				Time:     "",
-				DateTime: time.Unix(int64(i),0),
+				DateTime: time.Unix(int64(i), 0),
 				Value:    0,
 			})
 		}
-		messedUp := make([]Datapoint,100,100)
+		messedUp := make([]Datapoint, 100, 100)
 		copy(messedUp, original)
 		messedUp = append(messedUp[:5], messedUp[5+1:]...)
 		messedUp = append(messedUp[:6], messedUp[6+1:]...)
