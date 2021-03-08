@@ -37,7 +37,7 @@ func main() {
 		}
 
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
-		w.Header().Set("Cache-Control", "no-store, no-cache")
+		w.Header().Set("Cache-Control", "no-store, no-cache, max-age=0")
 		fmt.Fprint(w, currentBanner)
 	})
 	fmt.Println("Ensure Bluetooth is enabled on your phone so data can sync to FitBit's servers.")
