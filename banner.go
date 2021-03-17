@@ -25,13 +25,15 @@ type BannerXY struct {
 
 type Theme struct {
 	Background  string `json:"background"`
+	HeartNumber string `json:"heart_number"`
+	ViewOnGithub string `json:"view_on_github"`
+	TimezoneText string `json:"timezone_text"`
 	TextTicks   string `json:"text_ticks"`
 	CurrentBPM  string `json:"current_bpm"`
 	Title       string `json:"title"`
-	Heart       string `json:"heart"`
 	Axes        string `json:"axes"`
 	PlotLine    string `json:"plot_line"`
-	HeartNumber string `json:"heart_number"`
+	Heart       string `json:"heart"`
 }
 
 type Template struct {
@@ -285,14 +287,14 @@ var tmplSVG = `
 		</text>
 		{{ if .ShowWatermark }}
 			<a href="https://github.com/f0nkey/fitbit-readme-stats">
-				<text id="title" dominant-baseline="hanging" style="font: 600 8pt 'Arial', Sans-Serif; fill: {{ .Theme.Title }};" x="5pt">View on GitHub</text>
+				<text id="title" dominant-baseline="hanging" style="font: 600 8pt 'Arial', Sans-Serif; fill: {{ .Theme.ViewOnGithub }};" x="5pt">View on GitHub</text>
 			</a>
 		{{ end }}
 		
 		{{ if .TZLabel.Abbreviation }}
 			<g id="tz">
 				{{ if .TZLabel.Full }}<title>{{.TZLabel.Full}}</title>{{ end }}
-				<text id="title" dominant-baseline="hanging" text-anchor="end" style="font: 600 8pt 'Arial', Sans-Serif; fill: {{ .Theme.Title }};" x="{{sub .Width 5 }}pt">Times in {{ .TZLabel.Abbreviation }}</text>
+				<text id="title" dominant-baseline="hanging" text-anchor="end" style="font: 600 8pt 'Arial', Sans-Serif; fill: {{ .Theme.TimezoneText }};" x="{{sub .Width 5 }}pt">Times in {{ .TZLabel.Abbreviation }}</text>
 			</g>
 		{{ end }}
 		<g id="main-content" transform="translate(0 {{ add .TitleSize 6 }})">
