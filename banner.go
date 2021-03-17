@@ -48,6 +48,7 @@ type Template struct {
 
 	Title         string
 	TitleSize     int
+	TZLabel       TZLabel
 	ShowWatermark bool
 }
 
@@ -129,6 +130,15 @@ func genBanner(xy []BannerXY, config Config) (string, error) {
 	thirdWidth := config.BannerWidth / 3 // heart takes up 1/3rd, plot 2/3rd
 	plotWidth := thirdWidth * 2
 
+	tzLabel, err := lookupFullTZ(config.TimezoneAbbreviation, config.Timezone)
+	if err != nil {
+		tzLabel = TZLabel{
+			Abbreviation: config.TimezoneAbbreviation,
+			Full:         "",
+			UTCOffset:    config.Timezone,
+		}
+	}
+
 	tData := Template{
 		Width:            config.BannerWidth,
 		Height:           config.BannerHeight,
@@ -140,6 +150,7 @@ func genBanner(xy []BannerXY, config Config) (string, error) {
 		BPMTextSize:      19,
 		Title:            config.BannerTitle,
 		TitleSize:        12,
+		TZLabel:          tzLabel,
 		ShowWatermark:    config.DisplayViewOnGitHub,
 	}
 
@@ -276,6 +287,13 @@ var tmplSVG = `
 			<a href="https://github.com/f0nkey/fitbit-readme-stats">
 				<text id="title" dominant-baseline="hanging" style="font: 600 8pt 'Arial', Sans-Serif; fill: {{ .Theme.Title }};" x="5pt">View on GitHub</text>
 			</a>
+		{{ end }}
+		
+		{{ if .TZLabel.Abbreviation }}
+			<g id="tz">
+				{{ if .TZLabel.Full }}<title>{{.TZLabel.Full}}</title>{{ end }}
+				<text id="title" dominant-baseline="hanging" text-anchor="end" style="font: 600 8pt 'Arial', Sans-Serif; fill: {{ .Theme.Title }};" x="{{sub .Width 5 }}pt">Times in {{ .TZLabel.Abbreviation }}</text>
+			</g>
 		{{ end }}
 		<g id="main-content" transform="translate(0 {{ add .TitleSize 6 }})">
 			<g id="plot" transform="translate(166,0)">

@@ -23,6 +23,7 @@ Inspired by https://github.com/anuraghazra/github-readme-stats
 |-------------|---------------|
 | `port` | The port to serve the SVG on. |
 | `timezone` | Timezone as an integer hour offset from UTC. Value assumed based on computer's tz during setup. |
+| `timezone_abbrev` | The timezone represented in letters e.g., CST, MST. |
 | `banner_title` | The title at the top of the banner. |
 | `cache_invalidation_time` | How long (in seconds) before new heart-rate data should be requested from FitBit's servers. Checked every SVG request. |
 | `plot_range` | The time interval (in hours) to look back for heart-rate data. |

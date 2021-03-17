@@ -20,6 +20,9 @@ type Config struct {
 	// Timezone is the timezone used for display and calculations. Will get a "no data available" error if different from tz on the FitBit app. https://en.wikipedia.org/wiki/List_of_UTC_time_offsets
 	Timezone int `json:"timezone"`
 
+	// TimezoneAbbreviation is the timezone represented in letters e.g., CST, MST.
+	TimezoneAbbreviation string `json:"timezone_abbreviation"`
+
 	// BannerTitle is the title at the top of the banner.
 	BannerTitle string `json:"banner_title"`
 
@@ -78,10 +81,11 @@ func setupProcess() {
 	}
 	file.Close()
 
-	_, offset := time.Now().In(time.Local).Zone()
+	abbrev, offset := time.Now().Local().Zone()
 	config := Config{
 		Port:                  8090,
 		Timezone:              offset / 3600,
+		TimezoneAbbreviation:  abbrev,
 		BannerTitle:           "My Heart Rate From My FitBit Watch (Past 4 Hours)",
 		CacheInvalidationTime: 180,
 		PlotRange:             4,
