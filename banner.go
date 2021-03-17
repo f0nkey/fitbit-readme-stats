@@ -24,16 +24,16 @@ type BannerXY struct {
 }
 
 type Theme struct {
-	Background  string `json:"background"`
-	HeartNumber string `json:"heart_number"`
+	Background   string `json:"background"`
+	HeartNumber  string `json:"heart_number"`
 	ViewOnGithub string `json:"view_on_github"`
 	TimezoneText string `json:"timezone_text"`
-	TextTicks   string `json:"text_ticks"`
-	CurrentBPM  string `json:"current_bpm"`
-	Title       string `json:"title"`
-	Axes        string `json:"axes"`
-	PlotLine    string `json:"plot_line"`
-	Heart       string `json:"heart"`
+	TextTicks    string `json:"text_ticks"`
+	CurrentBPM   string `json:"current_bpm"`
+	Title        string `json:"title"`
+	Axes         string `json:"axes"`
+	PlotLine     string `json:"plot_line"`
+	Heart        string `json:"heart"`
 }
 
 type Template struct {
@@ -95,7 +95,7 @@ var BannerTicker = func(timeSeries plotter.XYs) plot.TickerFunc {
 
 func defaultBanner(c Config) string {
 	bg := fmt.Sprintf(`<rect width="100%%" height="100%%" fill="%s" />`, c.Theme.Background)
-	t := fmt.Sprintf(`<text x="%d" y="%d" fill="%s" style="font-family: sans-serif; font-weight:500;" dominant-baseline="hanging" text-anchor="middle">Banner not setup yet, or no data within range is available.</text>`, c.BannerWidth/2, c.BannerHeight/2, c.Theme.Title)
+	t := fmt.Sprintf(`<text x="%dpt" y="%dpt" fill="%s" style="font-family: sans-serif; font-weight:500;" text-anchor="middle">Banner not setup yet, or no data within range is available.</text>`, c.BannerWidth/2, c.BannerHeight/2, c.Theme.Title)
 	banner := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" id="banner" width="%dpt" height="%dpt"> %s </svg>`, c.BannerWidth, c.BannerHeight, bg+t)
 	return banner
 }
