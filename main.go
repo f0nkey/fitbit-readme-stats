@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	setupMode := flag.Bool("setup", false, "true will make the binary run through the setup process to generate credentials.json, false will serve the SVG normally")
+	setupMode := flag.Bool("setup", false, "run through the setup process to generate credentials.json, instead of serving the SVG normally")
 	flag.Parse()
 
 	if *setupMode {
@@ -40,7 +40,7 @@ func main() {
 		w.Header().Set("Cache-Control", "no-store, no-cache, max-age=0")
 		fmt.Fprint(w, currentBanner)
 	})
-	fmt.Println("Ensure Bluetooth is enabled on your phone so data can sync to FitBit's servers.")
+	fmt.Println("Ensure Bluetooth is enabled on your phone so data can sync to FitBit's servers, as well as Battery Saver mode being off.")
 	fmt.Println("Use the following README embed:", "![FitBit Heart Rate Chart](http://HOSTIP:"+strconv.Itoa(config.Port)+"/stats.svg)")
 	fmt.Println("Serving on port", strconv.Itoa(config.Port)+".")
 	http.ListenAndServe(":"+strconv.Itoa(config.Port), nil)

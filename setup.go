@@ -174,7 +174,7 @@ func askUserCredentials(appCreds AppCredentials) UserCredentials {
 			return // occurs when user leaves browser open and gets sent to this link again
 		}
 		var err error
-		userCreds, err = requestUserCredentials(userAuthCode, appCreds)
+		userCreds, err = reqInitUserCredentials(userAuthCode, appCreds)
 		if err != nil {
 			fmt.Fprint(w, "Error encountered. See console for further instructions.")
 			fmt.Println(w, "Error requesting user credentials", err)

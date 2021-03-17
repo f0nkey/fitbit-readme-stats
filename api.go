@@ -43,8 +43,8 @@ type Datapoint struct {
 	Value    int       `json:"value"`
 }
 
-// requestUserCredentials requests user credentials from FitBit.
-func requestUserCredentials(userAuthCode string, config AppCredentials) (UserCredentials, error) {
+// reqInitUserCredentials requests user credentials from FitBit for the first time.
+func reqInitUserCredentials(userAuthCode string, config AppCredentials) (UserCredentials, error) {
 	if userAuthCode == "" {
 		return UserCredentials{}, fmt.Errorf("no user auth code provided")
 	}
@@ -53,40 +53,6 @@ func requestUserCredentials(userAuthCode string, config AppCredentials) (UserCre
 		return UserCredentials{}, fmt.Errorf("error grabbing user tokens and credentials: %w", err)
 	}
 	return userCreds, nil
-}
-
-// heartRateTimesSeries returns the heart rate time series from the past four hours in a plottable format.
-// Side Effects: May write to config.json and edit the config argument with a refresh token if token expired.
-func heartRateTimesSeries(config *Config) ([]BannerXY, error) {
-	hrts, err := rawHeartRateTimeSeries(config.UserCredentials, *config)
-	if err != nil {
-		if err.Error() == "token must be refreshed" {
-			userCreds, err := reqUserCredentials(config.AppCredentials, "", config.UserCredentials.RefreshToken)
-			if err != nil {
-				return nil, fmt.Errorf("error refreshing tokens and credentials: %w", err)
-			}
-			config.UserCredentials = userCreds
-			err = writeConfigFile(*config)
-			if err != nil {
-				return nil, fmt.Errorf("error writing to config file after getting refresh token: %w", err)
-			}
-			hrts, err = rawHeartRateTimeSeries(config.UserCredentials, *config)
-			if err != nil {
-				return nil, fmt.Errorf("error grabbing heartrate data after token refresh: %w", err)
-			}
-		} else {
-			return nil, fmt.Errorf("error grabbing heartrate data: %w", err)
-		}
-	}
-
-	xy := make([]BannerXY, 0, len(hrts.ActivitiesHeartIntraday.Dataset))
-	for _, pt := range hrts.ActivitiesHeartIntraday.Dataset {
-		xy = append(xy, BannerXY{
-			X: pt.DateTime,
-			Y: pt.Value,
-		})
-	}
-	return xy, nil
 }
 
 // reqUserCredentials requests from FitBit the fields in the UserCredentials struct.
@@ -156,6 +122,40 @@ func reqUserCredentials(appCred AppCredentials, userAuthCode string, refreshToke
 	}
 
 	return creds, nil
+}
+
+// heartRateTimesSeries returns the heart rate time series from the past four hours in a plottable format.
+// Side Effects: May write to config.json and edit the config argument with a refresh token if token expired.
+func heartRateTimesSeries(config *Config) ([]BannerXY, error) {
+	hrts, err := rawHeartRateTimeSeries(config.UserCredentials, *config)
+	if err != nil {
+		if err.Error() == "token must be refreshed" {
+			userCreds, err := reqUserCredentials(config.AppCredentials, "", config.UserCredentials.RefreshToken)
+			if err != nil {
+				return nil, fmt.Errorf("error refreshing tokens and credentials: %w", err)
+			}
+			config.UserCredentials = userCreds
+			err = writeConfigFile(*config)
+			if err != nil {
+				return nil, fmt.Errorf("error writing to config file after getting refresh token: %w", err)
+			}
+			hrts, err = rawHeartRateTimeSeries(config.UserCredentials, *config)
+			if err != nil {
+				return nil, fmt.Errorf("error grabbing heartrate data after token refresh: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("error grabbing heartrate data: %w", err)
+		}
+	}
+
+	xy := make([]BannerXY, 0, len(hrts.ActivitiesHeartIntraday.Dataset))
+	for _, pt := range hrts.ActivitiesHeartIntraday.Dataset {
+		xy = append(xy, BannerXY{
+			X: pt.DateTime,
+			Y: pt.Value,
+		})
+	}
+	return xy, nil
 }
 
 // dateHour returns a time.Time as YYYY-MM-DD and HH.
