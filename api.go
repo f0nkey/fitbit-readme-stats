@@ -158,10 +158,10 @@ func heartRateTimesSeries(config *Config) ([]BannerXY, error) {
 	return xy, nil
 }
 
-// dateHour returns a time.Time as YYYY-MM-DD and HH.
-func dateHour(t time.Time) (date, hour string) {
+// dateHourMin returns a time.Time as YYYY-MM-DD and HH.
+func dateHourMin(t time.Time) (date, hourMin string) {
 	min := prependZero(t.Minute())
-	hrStr := strconv.Itoa(t.Hour()) + ":" + min
+	hrStr := prependZero(t.Hour()) + ":" + min
 	mo := t.Month()
 	moStr := prependZero(int(mo))
 	day := t.Day()
@@ -171,10 +171,10 @@ func dateHour(t time.Time) (date, hour string) {
 
 func prependZero(i int) string {
 	str := strconv.Itoa(i)
-	if i < 10 && str[0] != '0' {
-		return "0" + str
+	if i > 9 {
+		return str
 	}
-	return str
+	return "0" + str
 }
 
 // rawHeartRateTimeSeries returns heartrate-time data from FitBit.
@@ -185,8 +185,8 @@ func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRate
 	tRange := time.Hour * time.Duration(hourRange)
 	loc := time.FixedZone("zone", config.Timezone*3600)
 	now := time.Now().UTC().In(loc)
-	endDate, endHr := dateHour(now)
-	startDate, startHr := dateHour(now.Add(-tRange))
+	endDate, endHr := dateHourMin(now)
+	startDate, startHr := dateHourMin(now.Add(-tRange))
 	u := `https://api.fitbit.com/1/user/%s/activities/heart/date/%s/%s/1min/time/%s/%s.json`
 	uri := fmt.Sprintf(u, userCreds.UserID, startDate, endDate, startHr, endHr)
 

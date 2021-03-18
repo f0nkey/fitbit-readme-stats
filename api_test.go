@@ -85,3 +85,32 @@ func Test_fillInGaps(t *testing.T) {
 		})
 	}
 }
+
+func Test_dateHour(t *testing.T) {
+	type args struct {
+		t time.Time
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantDate string
+		wantHour string
+	}{
+		{name:"1", args: args{time.Date(2021,11,05,12,0,0,0,time.UTC)}, wantDate:"2021-11-05" , wantHour: "12:00"},
+		{name:"1", args: args{time.Date(2021,11,05,0,17,0,0,time.UTC)}, wantDate:"2021-11-05" , wantHour: "00:17"},
+		{name:"1", args: args{time.Date(2021,11,05,0,0,0,0,time.UTC)}, wantDate:"2021-11-05" , wantHour: "00:00"},
+		{name:"1", args: args{time.Date(2021,11,05,1,0,0,0,time.UTC)}, wantDate:"2021-11-05" , wantHour: "01:00"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDate, gotHour := dateHourMin(tt.args.t)
+			if gotDate != tt.wantDate {
+				t.Errorf("dateHourMin() gotDate = %v, want %v", gotDate, tt.wantDate)
+			}
+			if gotHour != tt.wantHour {
+				t.Errorf("dateHourMin() gotHour = %v, want %v", gotHour, tt.wantHour)
+			}
+		})
+	}
+}
+
