@@ -138,5 +138,4 @@ Uses the "Sponsor" button's pink color.
 | `user_credentials` | Holds credentials to authenticate with and request from the FitBit Web API. Don't share it with anyone! |
 
 ## Todo
-- Make timezone display pull from user's FitBit account timezone (currently uses computer tz at the time of setup)
 - More themes?

@@ -179,8 +179,6 @@ func prependZero(i int) string {
 
 // rawHeartRateTimeSeries returns heartrate-time data from FitBit.
 func rawHeartRateTimeSeries(userCreds UserCredentials, config Config) (HeartRateTimeSeries, error) {
-	// todo: query Get Profile endpoint to offset timezone by their UTC offset: GET https://api.fitbit.com/1/user/[user-id]/profile.json
-	// right now, it grabs the personal computer's tz during setup, which may be different from fitbit's servers
 	hourRange := config.PlotRange
 	tRange := time.Hour * time.Duration(hourRange)
 	loc := time.FixedZone("zone", config.Timezone*3600)
