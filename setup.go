@@ -127,7 +127,6 @@ func setupProcess() {
 	fmt.Println("\n=========")
 	fmt.Println("Step 3. Host")
 	fmt.Println("Setup is complete! Run this binary WITHOUT the setup flag to host the banner at http://HOSTIP:8090/stats.svg.")
-	fmt.Println("Run the binary with the flag -h to see configuration options (port, etc).")
 	fmt.Println("README.md Embed: ![FitBit Heart Rate Chart](http://HOSTIP:" + strconv.Itoa(config.Port) + "/stats.svg)")
 	fmt.Println("Press the Enter Key to exit.")
 	fmt.Scanln()
