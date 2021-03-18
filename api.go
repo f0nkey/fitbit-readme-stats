@@ -257,16 +257,18 @@ func fillInGaps(data []Datapoint, gapAmt int64) []Datapoint {
 	if len(data) == 0 {
 		return []Datapoint{}
 	}
-	start := data[0].DateTime.Unix()
-	for i, validTime := 1, start; i < len(data); i, validTime = i+1, validTime+gapAmt {
-		if data[i].DateTime.Unix() != validTime {
-			newEntry := Datapoint{
-				Time:     "",
-				DateTime: time.Unix(validTime, 0),
-				Value:    data[i-1].Value,
+	start := data[0].DateTime.Unix() + gapAmt
+	for i, validTime := 1, start;
+		i < len(data);
+		i, validTime = i+1, validTime+gapAmt {
+			if data[i].DateTime.Unix() != validTime {
+				newEntry := Datapoint{
+					Time:     "",
+					DateTime: time.Unix(validTime, 0),
+					Value:    data[i-1].Value,
+				}
+				data = append(data[:i], append([]Datapoint{newEntry}, data[i:]...)...)
 			}
-			data = append(data[:i], append([]Datapoint{newEntry}, data[i:]...)...)
-		}
 	}
 	return data
 }
