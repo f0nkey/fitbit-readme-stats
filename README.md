@@ -139,3 +139,4 @@ Uses the "Sponsor" button's pink color.
 
 ## Todo
 - More themes?
+- Make into a proper service, where no installation step is needed. (waiting on FitBit to approve this project)
