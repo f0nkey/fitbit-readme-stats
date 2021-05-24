@@ -29,13 +29,20 @@ func main() {
 	}
 
 	lastSVGGeneration := time.Unix(0, 0)
+	lastHydratedBanner := ""
 	currentBanner := defaultBanner(config)
 	http.HandleFunc("/stats.svg", func(w http.ResponseWriter, r *http.Request) {
 		if time.Since(lastSVGGeneration) > time.Second*time.Duration(config.CacheInvalidationTime) {
-			currentBanner = updateSVG(&config)
+			currentBanner, err = updateSVG(&config)
+			if err != nil {
+				currentBanner = lastHydratedBanner
+				if currentBanner == "" {
+					currentBanner = defaultBanner(config)
+				}
+			}
 			lastSVGGeneration = time.Now()
 		}
-
+		lastHydratedBanner = currentBanner
 		w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store, no-cache, max-age=0")
 		fmt.Fprint(w, currentBanner)

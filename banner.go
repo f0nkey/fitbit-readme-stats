@@ -100,18 +100,18 @@ func defaultBanner(c Config) string {
 	return banner
 }
 
-func updateSVG(c *Config) string {
+func updateSVG(c *Config) (string, error) {
 	hrts, err := heartRateTimesSeries(c)
 	if err != nil {
 		log.Print("Error grabbing time series", err.Error())
-		return defaultBanner(*c)
+		return "", fmt.Errorf("Error grabbing time series: %w", err)
 	}
 	banner, err := genBanner(hrts, *c)
 	if err != nil {
 		log.Print("Error generating banner: ", err.Error())
-		return defaultBanner(*c)
+		return "", fmt.Errorf("Error generating banner: %w", err)
 	}
-	return banner
+	return banner, nil
 }
 
 func genBanner(xy []BannerXY, config Config) (string, error) {
